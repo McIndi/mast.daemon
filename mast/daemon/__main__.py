@@ -1,16 +1,32 @@
+import os
 import sys
+import logging
 import platform
 import win32serviceutil
-from mastd_daemon import MASTd
+
+
 
 
 if "Windows" in platform.system():
+
     def main():
+        exe_dir = os.path.dirname(sys.executable)
+        if "site-packages" in exe_dir:
+            mast_home = os.path.abspath(os.path.join(
+                exe_dir, os.pardir, os.pardir, os.pardir, os.pardir))
+        else:
+            mast_home = os.path.abspath(os.path.join(exe_dir, os.pardir))
+        os.environ["MAST_HOME"] = mast_home
+        os.chdir(mast_home)
+        
+        from mast_daemon import MASTd
+
         win32serviceutil.HandleCommandLine(MASTd)
-        sys.exit(0)
         
 elif "Linux" in platform.system():
+
     def main():
+        from mast_daemon import MASTd
         mastd = MASTd("/var/run/mast/mastd.pid")
     
         if len(sys.argv) != 2:
@@ -32,4 +48,6 @@ elif "Linux" in platform.system():
         sys.exit(0)
 
 if __name__ == "__main__":
+    print "Calling main"
     main()
+    print "main returned"
