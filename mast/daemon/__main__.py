@@ -5,8 +5,6 @@ import platform
 import win32serviceutil
 
 
-
-
 if "Windows" in platform.system():
 
     def main():
@@ -16,6 +14,10 @@ if "Windows" in platform.system():
                 exe_dir, os.pardir, os.pardir, os.pardir, os.pardir))
         else:
             mast_home = os.path.abspath(os.path.join(exe_dir, os.pardir))
+        anaconda_dir = os.path.join(mast_home, "anaconda")
+        scripts_dir = os.path.join(mast_home, "anaconda", "Scripts")
+        sys.path.insert(0, anaconda_dir)
+        sys.path.insert(0, scripts_dir)
         os.environ["MAST_HOME"] = mast_home
         os.chdir(mast_home)
         
