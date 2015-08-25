@@ -13,17 +13,20 @@ except ImportError:
     from daemon import Daemon
     from time import sleep
 
-exe_dir = os.path.dirname(sys.executable)
-if "site-packages" in exe_dir:
-    mast_home = os.path.abspath(os.path.join(
-        exe_dir, os.pardir, os.pardir, os.pardir, os.pardir))
+if "MAST_HOME" not in os.environ:
+    exe_dir = os.path.dirname(sys.executable)
+    if "site-packages" in exe_dir:
+        mast_home = os.path.abspath(os.path.join(
+            exe_dir, os.pardir, os.pardir, os.pardir, os.pardir))
+    else:
+        mast_home = os.path.abspath(os.path.join(exe_dir, os.pardir))
+    os.environ["MAST_HOME"] = mast_home
 else:
-    mast_home = os.path.abspath(os.path.join(exe_dir, os.pardir))
+        mast_home = os.environ["MAST_HOME"]
 anaconda_dir = os.path.join(mast_home, "anaconda")
 scripts_dir = os.path.join(mast_home, "anaconda", "Scripts")
 sys.path.insert(0, anaconda_dir)
 sys.path.insert(0, scripts_dir)
-os.environ["MAST_HOME"] = mast_home
 os.chdir(mast_home)
 
 
@@ -58,7 +61,7 @@ if "Windows" in platform.system():
             self.timeout = 60000
             self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
             self.stop_requested = False
-    
+
         def SvcStop(self):
             self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
             win32event.SetEvent(self.stop_event)
@@ -138,7 +141,7 @@ elif "Linux" in platform.system():
                     logger.exception("An unhandled exception occurred during execution.")
                     pass
             logger.info("Collected plugins {}".format(str(self.named_objects.keys())))
-    
+
         @logged("mast.daemon")
         def run(self):
             os.chdir(mast_home)
@@ -182,7 +185,7 @@ elif "Linux" in platform.system():
             except:
                 logger.exception("An uhhandled exception occurred during execution")
                 raise
-    
+
         @logged("mast.daemon")
         def status(self):
             return "NOT IMPLEMENTED!"
