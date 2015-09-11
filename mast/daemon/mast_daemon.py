@@ -14,13 +14,14 @@ except ImportError:
     from time import sleep
 
 if "Windows" in platform.system():
-    exe_dir = os.path.dirname(sys.executable)
-    if "site-packages" in exe_dir:
-        mast_home = os.path.abspath(os.path.join(
-            exe_dir, os.pardir, os.pardir, os.pardir, os.pardir))
-    else:
-        mast_home = os.path.abspath(os.path.join(exe_dir, os.pardir))
-    os.environ["MAST_HOME"] = mast_home
+    if "MAST_HOME" not in os.environ:
+        exe_dir = os.path.dirname(sys.executable)
+        if "site-packages" in exe_dir:
+            mast_home = os.path.abspath(os.path.join(
+                exe_dir, os.pardir, os.pardir, os.pardir, os.pardir))
+        else:
+            mast_home = os.path.abspath(os.path.join(exe_dir, os.pardir))
+        os.environ["MAST_HOME"] = mast_home
 elif "Linux" in platform.system():
     mast_home = os.environ["MAST_HOME"]
 

@@ -28,7 +28,14 @@ elif "Linux" in platform.system():
 
     def main():
         from mast_daemon import MASTd
-        mastd = MASTd("/var/run/mast/mastd.pid")
+
+        mast_home = os.environ["MAST_HOME"]
+        pid_file = os.path.join(
+            mast_home,
+            "var",
+            "run",
+            "mastd.pid")
+        mastd = MASTd(pid_file)
 
         if len(sys.argv) != 2:
             print "USAGE: python -m mastd.daemon { start | stop | restart | status }"
