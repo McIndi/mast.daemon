@@ -1,11 +1,10 @@
 import os
 import sys
-import logging
 import platform
-import win32serviceutil
 
 
 if "Windows" in platform.system():
+    import win32serviceutil
 
     def main():
         exe_dir = os.path.dirname(sys.executable)
@@ -20,21 +19,21 @@ if "Windows" in platform.system():
         sys.path.insert(0, scripts_dir)
         os.environ["MAST_HOME"] = mast_home
         os.chdir(mast_home)
-        
+
         from mast_daemon import MASTd
 
         win32serviceutil.HandleCommandLine(MASTd)
-        
+
 elif "Linux" in platform.system():
 
     def main():
         from mast_daemon import MASTd
         mastd = MASTd("/var/run/mast/mastd.pid")
-    
+
         if len(sys.argv) != 2:
             print "USAGE: python -m mastd.daemon { start | stop | restart | status }"
             sys.exit(1)
-    
+
         if "start" in sys.argv[1]:
             mastd.start()
         elif "stop" in sys.argv[1]:
@@ -46,7 +45,7 @@ elif "Linux" in platform.system():
         else:
             print "USAGE: python -m mast.daemon { start | stop | restart | status }"
             sys.exit(1)
-    
+
         sys.exit(0)
 
 if __name__ == "__main__":

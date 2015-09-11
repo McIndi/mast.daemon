@@ -13,17 +13,21 @@ except ImportError:
     from daemon import Daemon
     from time import sleep
 
-exe_dir = os.path.dirname(sys.executable)
-if "site-packages" in exe_dir:
-    mast_home = os.path.abspath(os.path.join(
-        exe_dir, os.pardir, os.pardir, os.pardir, os.pardir))
-else:
-    mast_home = os.path.abspath(os.path.join(exe_dir, os.pardir))
+if "Windows" in platform.system():
+    exe_dir = os.path.dirname(sys.executable)
+    if "site-packages" in exe_dir:
+        mast_home = os.path.abspath(os.path.join(
+            exe_dir, os.pardir, os.pardir, os.pardir, os.pardir))
+    else:
+        mast_home = os.path.abspath(os.path.join(exe_dir, os.pardir))
+    os.environ["MAST_HOME"] = mast_home
+elif "Linux" in platform.system():
+    mast_home = os.environ["MAST_HOME"]
+
 anaconda_dir = os.path.join(mast_home, "anaconda")
 scripts_dir = os.path.join(mast_home, "anaconda", "Scripts")
 sys.path.insert(0, anaconda_dir)
 sys.path.insert(0, scripts_dir)
-os.environ["MAST_HOME"] = mast_home
 os.chdir(mast_home)
 
 
@@ -42,7 +46,6 @@ def get_plugins():
     return named_objects
 
 PLUGINS = get_plugins()
-print PLUGINS
 
 if "Windows" in platform.system():
     class MASTd(win32serviceutil.ServiceFramework):
@@ -58,7 +61,7 @@ if "Windows" in platform.system():
             self.timeout = 60000
             self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
             self.stop_requested = False
-    
+
         def SvcStop(self):
             self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
             win32event.SetEvent(self.stop_event)
@@ -82,16 +85,12 @@ if "Windows" in platform.system():
             global PLUGINS
             servicemanager.LogInfoMsg("Plugins: {}".format(PLUGINS))
             try:
-                logger.info("Attempting to start mastd")
                 threads = {}
-                logger.debug("Entering main loop")
                 servicemanager.LogInfoMsg("Entering main loop")
                 while not self.stop_requested:
                     for key, value in PLUGINS.items():
-                        logger.debug("{}".format(str(threads)))
                         if key in threads.keys():
                             if threads[key].isAlive():
-                                logger.debug("Plugin {} loaded and running".format(key))
                                 continue
                             else:
                                 logger.debug("Plugin {} found, but dead, attempting to restart".format(key))
@@ -112,7 +111,6 @@ if "Windows" in platform.system():
                             except:
                                 logger.exception("An unhandled exception occurred during execution.")
                                 continue
-                            logger.info("Plugin {} started".format(key))
                             continue
                     rc = win32event.WaitForSingleObject(self.hWaitStop, self.timeout)
                     # Check to see if self.hWaitStop happened
@@ -126,42 +124,35 @@ if "Windows" in platform.system():
 
 elif "Linux" in platform.system():
     class MASTd(Daemon):
-        @logged("mast.daemon")
+
         def get_plugins(self):
-            logger.debug("Attempting to retrieve list of plugins")
             self.named_objects = {}
             for ep in pkg_resources.iter_entry_points(group='mastd_plugin'):
-                logger.debug("found plugin: {}".format(ep.name))
                 try:
                     self.named_objects.update({ep.name: ep.load()})
                 except:
                     logger.exception("An unhandled exception occurred during execution.")
                     pass
             logger.info("Collected plugins {}".format(str(self.named_objects.keys())))
-    
+
         @logged("mast.daemon")
         def run(self):
             os.chdir(mast_home)
             try:
-                logger.info("Attempting to start mastd")
                 if not hasattr(self, "named_objects"):
-                    logger.debug("Plugins not known, discovering...")
                     self.get_plugins()
                 threads = {}
-                logger.debug("Entering main loop")
+
                 while True:
                     for key, value in self.named_objects.items():
-                        logger.debug("{}".format(str(threads)))
                         if key in threads.keys():
                             if threads[key].isAlive():
-                                logger.debug("Plugin {} loaded and running".format(key))
                                 continue
                             else:
                                 logger.debug("Plugin {} found, but dead, attempting to restart".format(key))
                                 try:
                                     threads[key] = value()
                                     threads[key].start()
-                                    logger.debug("Plugin {} started".format(key))
                                     continue
                                 except:
                                     logger.exception("An unhandled exception occurred during execution.")
@@ -175,15 +166,12 @@ elif "Linux" in platform.system():
                             except:
                                 logger.exception("An unhandled exception occurred during execution.")
                                 continue
-                            logger.info("Plugin {} started".format(key))
                             continue
-                    logger.debug("mastd sleeping for 60 seconds.")
                     sleep(60)
             except:
                 logger.exception("An uhhandled exception occurred during execution")
                 raise
-    
+
         @logged("mast.daemon")
         def status(self):
             return "NOT IMPLEMENTED!"
-
