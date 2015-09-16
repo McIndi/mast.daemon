@@ -22,6 +22,8 @@ if "Windows" in platform.system():
         else:
             mast_home = os.path.abspath(os.path.join(exe_dir, os.pardir))
         os.environ["MAST_HOME"] = mast_home
+    else:
+        mast_home = os.environ["MAST_HOME"]
 elif "Linux" in platform.system():
     mast_home = os.environ["MAST_HOME"]
 
