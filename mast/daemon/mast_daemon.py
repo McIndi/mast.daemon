@@ -36,7 +36,7 @@ os.chdir(mast_home)
 
 # This import needs os.environ["MAST_HOME"] to be set
 from mast.logging import make_logger, logged
-logger = make_logger("mast.daemon")
+
 
 @logged("mast.daemon")
 def get_plugins():
@@ -56,10 +56,11 @@ if "Windows" in platform.system():
         _svc_display_name_ = "mastd"
 
         def __init__(self, args):
+            logger = make_logger("mast.daemon")
             logger.debug("mastd running in {}".format(os.getcwd()))
             servicemanager.LogInfoMsg("In __init__ args: {}".format(str(args)))
             win32serviceutil.ServiceFramework.__init__(self, args)
-            self.stop_event = win32event.CreateEvent(None,0,0,None)
+            self.stop_event = win32event.CreateEvent(None, 0, 0, None)
             socket.setdefaulttimeout(60)
             self.timeout = 60000
             self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
@@ -76,7 +77,7 @@ if "Windows" in platform.system():
             servicemanager.LogMsg(
                 servicemanager.EVENTLOG_INFORMATION_TYPE,
                 servicemanager.PYS_SERVICE_STARTED,
-                (self._svc_name_,'')
+                (self._svc_name_, '')
             )
             self.ReportServiceStatus(win32service.SERVICE_RUNNING)
             servicemanager.LogInfoMsg("Running run")
@@ -84,6 +85,7 @@ if "Windows" in platform.system():
 
         @logged("mast.daemon")
         def run(self):
+            logger = make_logger("mast.daemon")
             servicemanager.LogInfoMsg("Inside run")
             global PLUGINS
             servicemanager.LogInfoMsg("Plugins: {}".format(PLUGINS))
@@ -100,46 +102,62 @@ if "Windows" in platform.system():
                                 try:
                                     threads[key] = value()
                                     threads[key].start()
-                                    logger.debug("Plugin {} started".format(key))
+                                    logger.debug(
+                                        "Plugin {} started".format(key))
                                     continue
                                 except:
-                                    logger.exception("An unhandled exception occurred during execution.")
+                                    logger.exception(
+                                        "An unhandled exception "
+                                        "occurred during execution.")
                                     continue
                         else:
-                            logger.info("Plugin {} not found. Attempting to start.".format(key))
+                            logger.info(
+                                "Plugin "
+                                "{} not found. Attempting to start.".format(
+                                    key))
                             try:
                                 threads[key] = value()
                                 threads[key].start()
                                 continue
                             except:
-                                logger.exception("An unhandled exception occurred during execution.")
+                                logger.exception(
+                                    "An unhandled exception occurred "
+                                    "during execution.")
                                 continue
                             continue
-                    rc = win32event.WaitForSingleObject(self.hWaitStop, self.timeout)
+                    rc = win32event.WaitForSingleObject(
+                        self.hWaitStop, self.timeout)
                     # Check to see if self.hWaitStop happened
                     if rc == win32event.WAIT_OBJECT_0:
                         # Stop signal encountered
-                        servicemanager.LogInfoMsg("SomeShortNameVersion - STOPPED!")
+                        servicemanager.LogInfoMsg(
+                            "SomeShortNameVersion - STOPPED!")
                         break
             except:
-                logger.exception("An uhhandled exception occurred during execution")
+                logger.exception(
+                    "An uhhandled exception occurred during execution")
                 raise
 
 elif "Linux" in platform.system():
     class MASTd(Daemon):
 
         def get_plugins(self):
+            logger = make_logger("mast.daemon")
             self.named_objects = {}
             for ep in pkg_resources.iter_entry_points(group='mastd_plugin'):
                 try:
                     self.named_objects.update({ep.name: ep.load()})
                 except:
-                    logger.exception("An unhandled exception occurred during execution.")
+                    logger.exception(
+                        "An unhandled exception occurred during execution.")
                     pass
-            logger.info("Collected plugins {}".format(str(self.named_objects.keys())))
+            logger.info(
+                "Collected plugins {}".format(
+                    str(self.named_objects.keys())))
 
         @logged("mast.daemon")
         def run(self):
+            logger = make_logger("mast.daemon")
             os.chdir(mast_home)
             try:
                 if not hasattr(self, "named_objects"):
@@ -158,21 +176,29 @@ elif "Linux" in platform.system():
                                     threads[key].start()
                                     continue
                                 except:
-                                    logger.exception("An unhandled exception occurred during execution.")
+                                    logger.exception(
+                                        "An unhandled exception occurred "
+                                        "during execution.")
                                     continue
                         else:
-                            logger.info("Plugin {} not found. Attempting to start.".format(key))
+                            logger.info(
+                                "Plugin "
+                                "{} not found. Attempting to start.".format(
+                                    key))
                             try:
                                 threads[key] = value()
                                 threads[key].start()
                                 continue
                             except:
-                                logger.exception("An unhandled exception occurred during execution.")
+                                logger.exception(
+                                    "An unhandled exception occurred "
+                                    "during execution.")
                                 continue
                             continue
                     sleep(60)
             except:
-                logger.exception("An uhhandled exception occurred during execution")
+                logger.exception(
+                    "An uhhandled exception occurred during execution")
                 raise
 
         @logged("mast.daemon")
