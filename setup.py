@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name = "mast.daemon",
-    version = "2.0.0",
+    version = "2.1.0",
     author = "Clifford Bressette",
     author_email = "cliffordbressette@mcindi.com",
     description = ("A daemon/service to run in the background and control mast related tasks."),
