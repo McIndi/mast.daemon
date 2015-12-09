@@ -34,7 +34,8 @@ sys.path.insert(0, scripts_dir)
 os.chdir(mast_home)
 
 
-# This import needs os.environ["MAST_HOME"] to be set
+# This import needs os.environ["MAST_HOME"] and os.environ["mastd"] to be set
+os.environ["mastd"] = "true"
 from mast.logging import make_logger, logged
 
 
