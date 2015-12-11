@@ -1,3 +1,15 @@
+"""
+This module implements a daemon on Linux platforms or a
+Service on Windows platforms. It checks for any modules
+which have a registered [setuptools entrypoint](http://pythonhosted.org/setuptools/pkg_resources.html#entry-points)
+called `mastd_plugin` which should be a subclass of `threading.Thread`.
+
+When `mastd` is started, it will search for and find `mastd_plugin`s and then
+attempt to start them. After one minute and each minute after that,
+each thread will be checked. If it is alive, it will be left alone, but
+if it is dead, it will be restarted. This process will continue until
+`mastd` is stopped.
+"""
 import os
 import sys
 import pkg_resources
@@ -41,6 +53,10 @@ from mast.logging import make_logger, logged
 
 @logged("mast.daemon")
 def get_plugins():
+    """
+    This function will use [pkg_resources.iter_entry_points](http://pythonhosted.org/setuptools/pkg_resources.html#basic-workingset-methods)
+    to find `entry_points` for `mastd_plugin` and return them.
+    """
     named_objects = {}
     for ep in pkg_resources.iter_entry_points(group='mastd_plugin'):
         try:
@@ -53,10 +69,18 @@ PLUGINS = get_plugins()
 
 if "Windows" in platform.system():
     class MASTd(win32serviceutil.ServiceFramework):
+        """
+        This is the Windows version of the MASTd class. It uses
+        `win32serviceutil.ServiceFramework` to setup a Windows
+        service to host mastd.
+        """
         _svc_name_ = "mastd"
         _svc_display_name_ = "mastd"
 
         def __init__(self, args):
+            """
+            Initialize the service.
+            """
             logger = make_logger("mast.daemon")
             logger.debug("mastd running in {}".format(os.getcwd()))
             servicemanager.LogInfoMsg("In __init__ args: {}".format(str(args)))
@@ -68,11 +92,17 @@ if "Windows" in platform.system():
             self.stop_requested = False
 
         def SvcStop(self):
+            """
+            Stop the service.
+            """
             self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
             win32event.SetEvent(self.stop_event)
             self.stop_requested = True
 
         def SvcDoRun(self):
+            """
+            Run the service.
+            """
             servicemanager.LogInfoMsg("In SvcDoRun")
             self.ReportServiceStatus(win32service.SERVICE_START_PENDING)
             servicemanager.LogMsg(
@@ -86,6 +116,12 @@ if "Windows" in platform.system():
 
         @logged("mast.daemon")
         def run(self):
+            """
+            This function does the brunt of the work by looping through
+            the plugins and starting them. After that it enters an
+            infinite loop checking the status of each plugin. If the
+            plugin is found dead it will attempt to restart the plugin.
+            """
             logger = make_logger("mast.daemon")
             servicemanager.LogInfoMsg("Inside run")
             global PLUGINS
@@ -141,8 +177,22 @@ if "Windows" in platform.system():
 
 elif "Linux" in platform.system():
     class MASTd(Daemon):
+        """
+        This class is the Linux version of MASTd, It acts like a
+        well-behaved Linux daemon. It will write a pid file to
+        `$MAST_HOME/var/run/mastd.pid` and it will fork into the
+        background twice causing it to become a child of init.
 
+        After that initilization, it will find `mastd_plugins` and
+        attempt to start them. After all the plugins are started,
+        mastd will check every minute each of the plugins, restarting
+        them if they are not alive.
+        """
         def get_plugins(self):
+            """
+            This method uses `pkg_resources.iter_entry_points` to locate
+            all `mastd_plugin`s and return them.
+            """
             logger = make_logger("mast.daemon")
             self.named_objects = {}
             for ep in pkg_resources.iter_entry_points(group='mastd_plugin'):
@@ -158,6 +208,12 @@ elif "Linux" in platform.system():
 
         @logged("mast.daemon")
         def run(self):
+            """
+            This method will be called when mastd has successfully been
+            spawned and forked. This is where most of the logic happens.
+
+            If the plugin's thread is found to be dead, it will be restarted.
+            """
             logger = make_logger("mast.daemon")
             os.chdir(mast_home)
             try:
@@ -204,4 +260,7 @@ elif "Linux" in platform.system():
 
         @logged("mast.daemon")
         def status(self):
+            """
+            Not implemented yet.
+            """
             return "NOT IMPLEMENTED!"
