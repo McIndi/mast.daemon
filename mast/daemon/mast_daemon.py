@@ -1,10 +1,12 @@
 """
+_module_: `mast.daemon`
+
 This module implements a daemon on Linux platforms or a
 Service on Windows platforms. It checks for any modules
 which have a registered [setuptools entrypoint](http://pythonhosted.org/setuptools/pkg_resources.html#entry-points)
 called `mastd_plugin` which should be a subclass of `threading.Thread`.
 
-When `mastd` is started, it will search for and find `mastd_plugin`s and then
+When `mastd` is started, it will search for and find `mastd_plugin`s and
 attempt to start them. After one minute and each minute after that,
 each thread will be checked. If it is alive, it will be left alone, but
 if it is dead, it will be restarted. This process will continue until
@@ -54,6 +56,8 @@ from mast.logging import make_logger, logged
 @logged("mast.daemon")
 def get_plugins():
     """
+    _function_: `mast.daemon.get_plugins()`
+
     This function will use [pkg_resources.iter_entry_points](http://pythonhosted.org/setuptools/pkg_resources.html#basic-workingset-methods)
     to find `entry_points` for `mastd_plugin` and return them.
     """
@@ -70,6 +74,8 @@ PLUGINS = get_plugins()
 if "Windows" in platform.system():
     class MASTd(win32serviceutil.ServiceFramework):
         """
+        _class_: `mast.daemon.MASTd(win32serviceutil.ServiceFramework)`
+
         This is the Windows version of the MASTd class. It uses
         `win32serviceutil.ServiceFramework` to setup a Windows
         service to host mastd.
@@ -79,7 +85,16 @@ if "Windows" in platform.system():
 
         def __init__(self, args):
             """
+            _method_: `mast.daemon.MASTd.__init__(self, args)`
+
             Initialize the service.
+
+            Parameters:
+
+            * `args`: These are the args being passed to
+            `win32serviceutil.ServiceFramework`. These args usually
+            come from the user via the command line, and should not
+            need to be called directly.
             """
             logger = make_logger("mast.daemon")
             logger.debug("mastd running in {}".format(os.getcwd()))
@@ -93,6 +108,8 @@ if "Windows" in platform.system():
 
         def SvcStop(self):
             """
+            _method_: `mast.daemon.MASTd.SvcStop(self)`
+
             Stop the service.
             """
             self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
@@ -101,6 +118,8 @@ if "Windows" in platform.system():
 
         def SvcDoRun(self):
             """
+            _method_: `mast.daemon.MASTd.SvcDoRun(self)`
+
             Run the service.
             """
             servicemanager.LogInfoMsg("In SvcDoRun")
@@ -117,6 +136,8 @@ if "Windows" in platform.system():
         @logged("mast.daemon")
         def run(self):
             """
+            _method_: `mast.daemon.MASTd.run(self)`
+
             This function does the brunt of the work by looping through
             the plugins and starting them. After that it enters an
             infinite loop checking the status of each plugin. If the
@@ -178,6 +199,8 @@ if "Windows" in platform.system():
 elif "Linux" in platform.system():
     class MASTd(Daemon):
         """
+        _class_: `mast.daemon.MASTd(daemon)`
+
         This class is the Linux version of MASTd, It acts like a
         well-behaved Linux daemon. It will write a pid file to
         `$MAST_HOME/var/run/mastd.pid` and it will fork into the
@@ -190,6 +213,8 @@ elif "Linux" in platform.system():
         """
         def get_plugins(self):
             """
+            _method_: `mast.daemon.MASTd.get_plugins(self)`
+
             This method uses `pkg_resources.iter_entry_points` to locate
             all `mastd_plugin`s and return them.
             """
@@ -209,6 +234,8 @@ elif "Linux" in platform.system():
         @logged("mast.daemon")
         def run(self):
             """
+            _method_: `mast.daemon.MASTd.run(self)`
+
             This method will be called when mastd has successfully been
             spawned and forked. This is where most of the logic happens.
 
@@ -261,6 +288,8 @@ elif "Linux" in platform.system():
         @logged("mast.daemon")
         def status(self):
             """
+            _method_: `mast.daemon.MASTd.status(self)`
+
             Not implemented yet.
             """
-            return "NOT IMPLEMENTED!"
+            raise NotImplementedError
