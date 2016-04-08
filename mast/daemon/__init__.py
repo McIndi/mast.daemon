@@ -12,4 +12,7 @@ each thread will be checked. If it is alive, it will be left alone, but
 if it is dead, it will be restarted. This process will continue until
 `mastd` is stopped.
 """
+import os
 from mast_daemon import *
+
+__version__ = "{}-0".format(os.environ["MAST_VERSION"])
