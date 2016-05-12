@@ -14,5 +14,3 @@ if it is dead, it will be restarted. This process will continue until
 """
 import os
 from mast_daemon import *
-
-__version__ = "{}-0".format(os.environ["MAST_VERSION"])
