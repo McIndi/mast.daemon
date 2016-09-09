@@ -15,7 +15,7 @@ if it is dead, it will be restarted. This process will continue until
 import os
 
 # This environment variable needs to be set for other imports to work
-os.environ["MAST_VERSION"] = "2.1.1"
+os.environ["MAST_VERSION"] = "2.2.0"
 __version__ = "{}-0".format(os.environ["MAST_VERSION"])
 
 from mast_daemon import *
